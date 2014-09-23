@@ -1,15 +1,8 @@
-ros_control_iso
-===============
+This controller does the thruster identification data acquisiton.
+*     It will drive the thruster through the complete 'positive' range.
+*     For the inverse a second run is necessary, limitation is the BBB ADC
+*     The driver will keep a thrust comand until the force feedback signal is stable.
+*     The status will be published on a ros topic, with a flag if it was stable.
 
-Implementing the Identification through Self-Oscillation as a ros_control controller.
-
-The controller relies on the EffortJointInterface.
-
-This controller is based on: 
-https://github.com/ros-controls/ros_control/wiki/controller_interface
-and
-https://github.com/labust/labust-ros-pkg/tree/master/ident_so
-
-
-All parameters required for setting up the relay with hysteresis are to be set in the I-SO.yaml file.
-The roslaunch file starts and loads the controller. It then needs to be started via a ros service call
+*   23/Sept/2014
+*///////////////////////////////////////////////////////////////////////
