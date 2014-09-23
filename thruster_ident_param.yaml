@@ -1,0 +1,33 @@
+ros_control_iso: #The Identification by Self-Oscillation parameter server parameter initialisation yaml file
+  joint : x
+  parameters :
+    update_rate : 50
+    identification_length : 10
+    relay_upper_limit_limit : 0.2
+    relay_lower_limit_limit : -0.2
+    relay_amplitude_out_inNewtons : 5
+    position_reference : 0
+    e_max_error : 0.1
+    e_min_error : -0.1
+  solution:
+    alpha : 0
+    k_xx : 0
+    k_xx : 0
+    delta : 0
+    omega_n : 0
+  thruster_ident_driver:
+    r_mean_window_size: 50
+    update_rate : 50
+    calibration_length: 20
+    min_acquisiton_length: 20
+    direction: 1 #1=FORWARD; 0=BACKWARD
+    command_list: [10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100]
+# Publish all joint states -----------------------------------
+#  joint_state_controller:
+#    type: joint_state_controller/JointStateController
+#    publish_rate: 50  
+# Position Controllers ---------------------------------------
+  type: ros_control_iso/thruster_ident_driver
+  joint: x
+  publish_rate: 50
+

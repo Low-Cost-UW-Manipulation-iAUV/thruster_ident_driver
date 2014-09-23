@@ -1,0 +1,8 @@
+
+<library path="lib/libthruster_ident_driver">
+  <class name="ros_control_iso/thruster_ident_driver" type="ros_control_iso::thruster_ident_driver" base_class_type="controller_interface::ControllerBase">
+    <description>
+		Drives a thruster for identification purpose
+     </description>
+  </class>
+</library>
