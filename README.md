@@ -1,3 +1,6 @@
+thruster_ident_driver
+=======================
+
 This controller does the thruster identification data acquisiton.
 *     It will drive the thruster through the complete 'positive' range.
 *     For the inverse a second run is necessary, limitation is the BBB ADC
