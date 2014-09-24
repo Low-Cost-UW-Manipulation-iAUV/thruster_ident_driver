@@ -15,15 +15,10 @@
 #include <hardware_interface/joint_command_interface.h>
 #include <pluginlib/class_list_macros.h>
 
-#include "geometry_msgs/Vector3.h"
-
 #include <labust/math/NumberManipulation.hpp>
-#include <ros_control_iso/relay_with_hysteresis.hpp>
+#include <thruster_ident_driver/thruster_ident_driver.hpp>
 
 
-#include <boost/accumulators/accumulators.hpp>
-#include <boost/accumulators/statistics/stats.hpp>
-#include <boost/accumulators/statistics/rolling_mean.hpp>
 
 namespace ros_control_iso{
 
@@ -35,12 +30,11 @@ namespace ros_control_iso{
   **************************************** */
   bool thruster_ident_driver::init(hardware_interface::EffortJointInterface* hw, ros::NodeHandle &n)
   {
-
     finished = FALSE;
     stable = FALSE;
+    calibration_complete = FALSE;
 
-    ///set the output to 0;
-    joint_.setCommand(0);
+
 
 
     // get joint name from the parameter server
@@ -56,6 +50,14 @@ namespace ros_control_iso{
     }
     catch (...) {
       ROS_ERROR("ros_control - thruster_ident_driver: Exception happened - Could not get handle of the joint");
+    }
+
+
+    ///find the lever_factor
+    if (!n.getParam("/ros_control_iso/thruster_ident_driver/lever_factor", lever_factor)){
+      ROS_ERROR("ros_control - thruster_ident_driver: Could not find lever_factor, assuming 1\n");
+      lever_factor = 1;
+      n.setParam("/ros_control_iso/thruster_ident_driver/lever_factor", lever_factor);
     }
 
 
@@ -81,7 +83,6 @@ namespace ros_control_iso{
       ROS_ERROR("ros_control - thruster_ident_driver: Could not find direction\n");
       return EXIT_FAILURE;
     }   
-
   
     /// Find the command list
     if (!n.getParam("/ros_control_iso/thruster_ident_driver/command_list", command_list)){
@@ -91,52 +92,25 @@ namespace ros_control_iso{
 
     /// find the acquisiton length
     if (!n.getParam("/ros_control_iso/thruster_ident_driver/min_acquisiton_length", min_acquisiton_length)){
-      ROS_ERROR("ros_control - thruster_ident_driver: Could not find min_acquisiton_length, assuming 20s\n");
-      min_acquisiton_length = 50;
+      ROS_ERROR("ros_control - thruster_ident_driver: Could not find min_acquisiton_length, assuming 30s\n");
+      min_acquisiton_length = 30;
       n.setParam("/ros_control_iso/thruster_ident_driver/min_acquisiton_length", min_acquisiton_length);
     }       
     
-    thruster_ident_driver::rolling_average_setup();
-
 
     /// Start realtime state publisher
     ROS_INFO("ros_control - thruster_ident_driver: Loaded all parameters, starting the realtime publisher.\n");
-    controller_state_publisher_.reset(new realtime_tools::RealtimePublisher<control_msgs::JointControllerState>(n, "thruster_ident_data", 1) );
-    ROS_INFO("ros_control - ros_control_iso: RealtimePublisher started\n");
+    controller_state_publisher_.reset(new realtime_tools::RealtimePublisher<geometry_msgs::Vector3Stamped>(n, "thruster_ident_data", 1) );
+    ROS_INFO("ros_control - thruster_ident_driver: RealtimePublisher started\n");
 
     ///Starting the subscriber
-    subscriber = n.subscribe<geometry_msgs::Vector3>("thruster_ident_force", 20, &thruster_ident_driver::subs_callback, this);
+    subscriber = n.subscribe<geometry_msgs::Vector3>("/thruster_ident_adc", 20, &thruster_ident_driver::subs_callback, this);
 
-    /// start in calibration mode
-    calibration_flag = TRUE;
-    while(~calibration_complete){
-        sleep(1);
-    }
 
-    return EXIT_SUCCESS;
+
+    return 1; //It does not like EXIT_SUCCESS...
   }
 
-  /** rolling_average_callback(...) setup the boost accumulator
-  *
-  *
-  * \author Raphael Nagel
-  * \date 23/Sept/2014
-  **************************************** */
-  void thruster_ident_driver::rolling_average_setup(void){
-  unsigned int r_mean_window_size;
-  /// find the update_rate
-  if (!n.getParam("/ros_control_iso/thruster_ident_driver/r_mean_window_size", r_mean_window_size)){
-    ROS_ERROR("ros_control - thruster_ident_driver: Could not find r_mean_window_size, assuming 50\n");
-    r_mean_window_size = 50;
-    n.setParam("/ros_control_iso/thruster_ident_driver/r_mean_window_size", r_mean_window_size);
-  }  
-
-    r_mean( tag::rolling_window::window_size = r_mean_window_size);
-
-    old_rolling_mean = 0;
-    new_rolling_mean = 0;
-
-  };
 
 
   /** subs_callback(...) acts on incoming messages
@@ -146,39 +120,30 @@ namespace ros_control_iso{
   * \date 23/Sept/2014
   **************************************** */
   void thruster_ident_driver::subs_callback(const geometry_msgs::Vector3::ConstPtr& message){
-    static num_of_samples = 0;
-    static accumulator = 0;
+    static unsigned int num_of_samples = 0;
+    static unsigned int accumulator = 0;
 
     ///run the calibration routine
-    if(calibration_flag == TRUE){
+    if(calibration_complete == FALSE){
       accumulator = accumulator + message->x;
     
       ///End the calibration once enough samples, calc the offset
       if(num_of_samples >= calibration_length_num_of_samples){
         offset = accumulator/num_of_samples;
-        calibration_complete = TRUE;
-      }
+        ros::param::set("/ros_control_iso/thruster_ident_driver/signal_offset", offset);
 
+        calibration_complete = TRUE;
+
+      }
+      ROS_INFO("num_of_samples: %d  of calibration_length_num_of_samples: %d\n",num_of_samples, calibration_length_num_of_samples);
       num_of_samples ++;
     
     ///run the normal routine with stability test
     }else{
       ADC_data = message->x;
 
-      thruster_ident_driver::stable_average();
     }
 
-
-  }
-
-  void thruster_ident_driver::stable_average(){
-    r_mean(ADC_data);
-
-    if(update_counter >= (unsigned int) (min_acquisiton_length / update_rate) ){
-      if( abs(ADC_data - rolling_mean(r_mean) <= 20){
-        stable == TRUE;
-      }
-    }
 
   }
 
@@ -193,8 +158,8 @@ namespace ros_control_iso{
   **************************************** */
   void thruster_ident_driver::update(const ros::Time& time, const ros::Duration& period){
     //ROS_INFO("ros_control - ros_control_iso: Updating the controller output.\n");
-    int command_out = 0;
-
+    double command_out = 0;
+    
     ///act on finished state
     if(finished == TRUE){
 
@@ -203,31 +168,48 @@ namespace ros_control_iso{
       switcher.request.stop_controllers.push_back("thruster_ident_driver");
       switcher.request.strictness = STRICT; //STRICT==2
       ros::service::call("/controller_manager/switch_controller", switcher);    
+
     }else 
     ///response has stabilised --> change demand
     if(stable == TRUE){
-      demand_list_index ++:
-      stable == FALSE;
+      demand_list_index ++;
+      stable = FALSE;
 
       ///if we have finished all commands, prevent overflow and set finished flag
       if(demand_list_index >= (command_list.size() - 1) ){
         demand_list_index = (command_list.size() - 1);
-        finished == TRUE;
+        finished = TRUE;
       }
-      update_counter = 0;
     }
     
 
+    /// start in calibration mode
+  
+    if(calibration_complete == TRUE){
+      
+      ///Send the next command
+      if(direction == FORWARD){   
 
-    ///Send the next command
-    if(direction == FORWARD){
-      command_out = command_list[demand_list_index];
-      joint_.setCommand(command_out);
-    }else if(direction == BACKWARD){
-      command_out = command_list[demand_list_index] * -1;
-      joint_.setCommand(command_out);
+        command_out = command_list[demand_list_index];
+        joint_.setCommand(command_out);
+
+      }else if(direction == BACKWARD){
+
+        command_out = command_list[demand_list_index] * -1;
+        joint_.setCommand(command_out);
+
+      }
+      update_counter++;
     }
 
+
+
+    ///run each step for x seconds.
+    if(update_counter >= (unsigned int) (min_acquisiton_length * update_rate) ) {
+      stable = TRUE;
+      update_counter = 0;
+
+    }
 
 
     ///Publish the current state
@@ -236,7 +218,7 @@ namespace ros_control_iso{
           controller_state_publisher_->msg_.header.stamp = ros::Time::now();
 
           controller_state_publisher_->msg_.vector.x = command_out;
-          controller_state_publisher_->msg_.vector.y = (ADC_data - offset);
+          controller_state_publisher_->msg_.vector.y = (ADC_data - offset)/lever_factor;
           controller_state_publisher_->msg_.vector.z = stable;
           controller_state_publisher_->unlockAndPublish();
         }    
@@ -249,27 +231,17 @@ namespace ros_control_iso{
   * \date 18/Aug/2014
   **************************************** */
   void thruster_ident_driver::starting(const ros::Time& time) { 
-    int command_out;
+    double command_out = 0;
 
     ROS_INFO("ros_control - thruster_ident_driver: starting the controller. \n");
 
-   
+    calibration_complete = FALSE;
     finished = FALSE;
     stable = FALSE;
     demand_list_index = 0;
+    update_counter = 0;
+    ROS_INFO("ros_control - thruster_ident_driver: Calibrating...\n");
 
-
-    ///Send the first command
-    if(direction == FORWARD){
-      command_out = command_list[demand_list_index];
-      joint_.setCommand(command_out);
-    }else if(direction == BACKWARD){
-      command_out = command_list[demand_list_index] * -1;
-      joint_.setCommand(command_out);
-    }
-
-
-    ROS_INFO("ros_control - thruster_ident_driver: driving now\n");
   }
 
 
@@ -289,4 +261,4 @@ namespace ros_control_iso{
   
 }//end of namespace
 
-PLUGINLIB_EXPORT_CLASS( ros_control_iso::relay_with_hysteresis, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS( ros_control_iso::thruster_ident_driver, controller_interface::ControllerBase)

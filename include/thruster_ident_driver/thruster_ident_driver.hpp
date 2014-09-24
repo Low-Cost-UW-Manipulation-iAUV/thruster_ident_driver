@@ -21,13 +21,18 @@
 //#include <urdf/model.h>
 #include <boost/scoped_ptr.hpp>
 #include <boost/thread/condition.hpp>
+
+
+
 #include <realtime_tools/realtime_publisher.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <controller_interface/controller.h>
 #include <control_msgs/JointControllerState.h>
-#include <std_msgs/Float64.h>
 #include <control_msgs/JointControllerState.h>
 #include <realtime_tools/realtime_buffer.h>
+
+#include "geometry_msgs/Vector3.h"
+#include "geometry_msgs/Vector3Stamped.h"
 
 
 #define TRUE 1
@@ -35,36 +40,44 @@
 #define FORWARD 1
 #define BACKWARD 0
 
+#define STRICT 2
+
+
 
 namespace ros_control_iso{
 
-	class relay_with_hysteresis : public controller_interface::Controller<hardware_interface::EffortJointInterface>
+	class thruster_ident_driver : public controller_interface::Controller<hardware_interface::EffortJointInterface>
 	{
 	public:
 	 	bool init(hardware_interface::EffortJointInterface* , ros::NodeHandle& );
-		void update(const ros::Time& , const ros::Duration& period);
+		void update(const ros::Time& , const ros::Duration& );
 		void starting(const ros::Time& );
 		void stopping(const ros::Time& ); 
-		void thruster_ident_driver::subs_callback(const geometry_msgs::Vector3::ConstPtr& );
+		void subs_callback(const geometry_msgs::Vector3::ConstPtr& );
 
 	private:
 
 		std::vector<int> command_list;
 
+		ros::Subscriber subscriber;
+
 		unsigned int ADC_data;	
-	    accumulator_set<unsigned int, features≤ tag::rolling_mean > > r_mean;
 
 		bool finished;
-		unsigned int min_acquisiton_length;
+		double min_acquisiton_length;
 
 
 		std::string my_joint;
-		unsigned int update_rate;
-		unsigned int calibration_length;
+		double lever_factor;
+		double update_rate;
+		double calibration_length;
 		float offset;
 		bool direction;
 		bool stable;
+		bool calibration_complete;
 		unsigned int demand_list_index;
+		unsigned int update_counter;
+		unsigned int calibration_length_num_of_samples;
 
 
 		
