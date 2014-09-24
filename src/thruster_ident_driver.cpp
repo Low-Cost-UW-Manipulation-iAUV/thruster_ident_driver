@@ -165,7 +165,7 @@ namespace ros_control_iso{
 
       //Unload the relay
       controller_manager_msgs::SwitchController switcher;
-      switcher.request.stop_controllers.push_back("thruster_ident_driver");
+      switcher.request.stop_controllers.push_back("/ros_control_iso/thruster_ident_driver");
       switcher.request.strictness = STRICT; //STRICT==2
       ros::service::call("/controller_manager/switch_controller", switcher);    
 
@@ -240,6 +240,7 @@ namespace ros_control_iso{
     stable = FALSE;
     demand_list_index = 0;
     update_counter = 0;
+    ADC_data = 0;
     ROS_INFO("ros_control - thruster_ident_driver: Calibrating...\n");
 
   }
