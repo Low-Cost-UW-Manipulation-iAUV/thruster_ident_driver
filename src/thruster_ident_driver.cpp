@@ -33,6 +33,8 @@ namespace ros_control_iso{
     finished = FALSE;
     stable = FALSE;
     calibration_complete = FALSE;
+    ADC_data = 0;
+
 
 
 
@@ -158,7 +160,6 @@ namespace ros_control_iso{
   **************************************** */
   void thruster_ident_driver::update(const ros::Time& time, const ros::Duration& period){
     //ROS_INFO("ros_control - ros_control_iso: Updating the controller output.\n");
-    double command_out = 0;
     
     ///act on finished state
     if(finished == TRUE){
@@ -176,7 +177,7 @@ namespace ros_control_iso{
       stable = FALSE;
 
       ///if we have finished all commands, prevent overflow and set finished flag
-      if(demand_list_index >= (command_list.size() - 1) ){
+      if(demand_list_index > (command_list.size() - 1) ){
         demand_list_index = (command_list.size() - 1);
         finished = TRUE;
       }
@@ -186,7 +187,8 @@ namespace ros_control_iso{
     /// start in calibration mode
   
     if(calibration_complete == TRUE){
-      
+      double command_out = 0;
+
       ///Send the next command
       if(direction == FORWARD){   
 
@@ -200,6 +202,18 @@ namespace ros_control_iso{
 
       }
       update_counter++;
+
+    ///Publish the current state
+      if(controller_state_publisher_ && controller_state_publisher_->trylock())
+      {
+        controller_state_publisher_->msg_.header.stamp = ros::Time::now();
+
+        controller_state_publisher_->msg_.vector.x = command_out;
+        controller_state_publisher_->msg_.vector.y = (ADC_data - offset)/lever_factor;
+        controller_state_publisher_->msg_.vector.z = stable;
+        controller_state_publisher_->unlockAndPublish();
+      } 
+
     }
 
 
@@ -212,17 +226,8 @@ namespace ros_control_iso{
     }
 
 
-    ///Publish the current state
-    if(controller_state_publisher_ && controller_state_publisher_->trylock())
-        {
-          controller_state_publisher_->msg_.header.stamp = ros::Time::now();
 
-          controller_state_publisher_->msg_.vector.x = command_out;
-          controller_state_publisher_->msg_.vector.y = (ADC_data - offset)/lever_factor;
-          controller_state_publisher_->msg_.vector.z = stable;
-          controller_state_publisher_->unlockAndPublish();
-        }    
-  }
+  }//end of function
 
 
   /** starting() is called when the controller starts, it resets the variables to be identified
@@ -231,7 +236,6 @@ namespace ros_control_iso{
   * \date 18/Aug/2014
   **************************************** */
   void thruster_ident_driver::starting(const ros::Time& time) { 
-    double command_out = 0;
 
     ROS_INFO("ros_control - thruster_ident_driver: starting the controller. \n");
 

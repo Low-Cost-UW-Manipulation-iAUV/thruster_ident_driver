@@ -1,5 +1,4 @@
 ros_control_iso: #The Identification by Self-Oscillation parameter server parameter initialisation yaml file
-  joint : x
   thruster_ident_driver:
     lever_factor: 17.0760
     update_rate : 50
