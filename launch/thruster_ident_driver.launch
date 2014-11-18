@@ -2,5 +2,5 @@
   <!-- urdf xml robot description loaded on the Parameter Server-->
     <rosparam command="load" file="$(find thruster_ident_driver)/thruster_ident_param.yaml" />
     <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
-      output="screen" ns="/ros_control_iso" args="thruster_ident_driver" />    
+      output="screen"  args="/ros_control_iso/thruster_ident_driver" />    
 </launch>
