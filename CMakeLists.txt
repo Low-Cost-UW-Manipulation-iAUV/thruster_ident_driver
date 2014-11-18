@@ -4,22 +4,25 @@ project(thruster_ident_driver)
 # Load catkin and all dependencies required for this package
 find_package(catkin REQUIRED COMPONENTS
 controller_interface
+controller_manager
 hardware_interface
 pluginlib
-control_msgs
+geometry_msgs
 #forward_command_controller
 control_toolbox
 realtime_tools
 urdf
 
 )
+find_package(Boost REQUIRED COMPONENTS thread system)
 
-include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} SYSTEM ${Boost_INCLUDE_DIR})
 # Declare catkin package
 catkin_package(
 CATKIN_DEPENDS
 controller_interface
-control_msgs
+controller_manager
+geometry_msgs
 control_toolbox
 realtime_tools
 urdf
@@ -34,7 +37,12 @@ add_library(${PROJECT_NAME}
 src/thruster_ident_driver.cpp
 
 )
+
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+
+add_executable(thruster_ident_hw_loop src/thruster_ident_hw_loop.cpp)
+target_link_libraries(thruster_ident_hw_loop ${catkin_LIBRARIES}  ${roscpp_LIBRARIES} ${Boost_LIBRARIES} )
+
 # Install
 install(DIRECTORY include/${PROJECT_NAME}/
 DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
