@@ -9,3 +9,12 @@ This controller does the thruster identification data acquisiton.
 
 *   23/Sept/2014
 *///////////////////////////////////////////////////////////////////////
+
+You start it after loading the yaml file:
+
+rosparam load .../src/thruster_ident_driver/thruster_ident_param.yaml
+
+rosrun controller_manager spawner /ros_control_iso/thruster_ident_driver
+
+
+It will sit and wait for the calibration data, so you should star the thruster_ident_adc node as well.

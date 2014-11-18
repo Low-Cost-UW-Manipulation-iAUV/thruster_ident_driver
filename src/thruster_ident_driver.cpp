@@ -15,7 +15,6 @@
 #include <hardware_interface/joint_command_interface.h>
 #include <pluginlib/class_list_macros.h>
 
-#include <labust/math/NumberManipulation.hpp>
 #include <thruster_ident_driver/thruster_ident_driver.hpp>
 
 
@@ -34,10 +33,6 @@ namespace ros_control_iso{
     stable = FALSE;
     calibration_complete = FALSE;
     ADC_data = 0;
-
-
-
-
 
     // get joint name from the parameter server
     if (!n.getParam("/ros_control_iso/joint", my_joint)){
@@ -122,11 +117,10 @@ namespace ros_control_iso{
   * \date 23/Sept/2014
   **************************************** */
   void thruster_ident_driver::subs_callback(const geometry_msgs::Vector3::ConstPtr& message){
-    static unsigned int num_of_samples = 0;
-    static unsigned int accumulator = 0;
-
     ///run the calibration routine
     if(calibration_complete == FALSE){
+      static unsigned int num_of_samples = 1;
+      static unsigned int accumulator = 0;      
       accumulator = accumulator + message->x;
     
       ///End the calibration once enough samples, calc the offset
@@ -135,18 +129,16 @@ namespace ros_control_iso{
         ros::param::set("/ros_control_iso/thruster_ident_driver/signal_offset", offset);
 
         calibration_complete = TRUE;
+        ROS_INFO("ros_control_iso - thruster_ident_driver: Starting thruster with a demand of %f",command_list[demand_list_index]);
 
       }
-      ROS_INFO("num_of_samples: %d  of calibration_length_num_of_samples: %d\n",num_of_samples, calibration_length_num_of_samples);
+      ROS_INFO("ros_control_iso - thruster_ident_driver: num_of_samples: %d  of calibration_length_num_of_samples: %d\n",num_of_samples, calibration_length_num_of_samples);
       num_of_samples ++;
     
     ///run the normal routine with stability test
     }else{
       ADC_data = message->x;
-
     }
-
-
   }
 
 
@@ -175,7 +167,7 @@ namespace ros_control_iso{
     if(stable == TRUE){
       demand_list_index ++;
       stable = FALSE;
-
+      ROS_INFO("ros_control_iso - thruster_ident_driver: Changing demand to %f",command_list[demand_list_index]);
       ///if we have finished all commands, prevent overflow and set finished flag
       if(demand_list_index > (command_list.size() - 1) ){
         demand_list_index = (command_list.size() - 1);

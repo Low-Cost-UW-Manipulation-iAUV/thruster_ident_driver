@@ -11,7 +11,6 @@ control_msgs
 control_toolbox
 realtime_tools
 urdf
-snippets
 
 )
 

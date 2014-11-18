@@ -57,7 +57,7 @@ namespace ros_control_iso{
 
 	private:
 
-		std::vector<int> command_list;
+		std::vector<double> command_list;
 
 		ros::Subscriber subscriber;
 
