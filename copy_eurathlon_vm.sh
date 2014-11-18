@@ -5,7 +5,7 @@ rsync -avzh ./src/*.cpp 						eurathlon_vm:/home/euratlhon/uwesub_msc/src/thrust
 rsync -avzh ./include/thruster_ident_driver/*.hpp 	eurathlon_vm:/home/euratlhon/uwesub_msc/src/thruster_ident_driver/include/thruster_ident_driver/
 rsync -avzh CMakeLists.txt 						eurathlon_vm:/home/euratlhon/uwesub_msc/src/thruster_ident_driver/
 rsync -avzh *.xml 								eurathlon_vm:/home/euratlhon/uwesub_msc/src/thruster_ident_driver/
-rsync -avzh *.launch	 						eurathlon_vm:/home/euratlhon/uwesub_msc/src/thruster_ident_driver/
+rsync -avzh ./launch/*.launch	 				eurathlon_vm:/home/euratlhon/uwesub_msc/src/thruster_ident_driver/launch/
 rsync -avzh *.yaml		 						eurathlon_vm:/home/euratlhon/uwesub_msc/src/thruster_ident_driver/
 rsync -avzh *.md								eurathlon_vm:/home/euratlhon/uwesub_msc/src/thruster_ident_driver/
 

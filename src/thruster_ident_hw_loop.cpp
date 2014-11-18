@@ -43,7 +43,7 @@ namespace UWEsub {
         sequence = 0;
         terminate_flag = false;
         safe = false;
-
+        write_command.resize(6,0); //send  0 commands to all thrusters which could potentially be connected...
 
         /// Create a panic command line panic button that can be used like this: rosservice call stop
         panic_stopper = nh_.advertiseService("/stop", &phoenix_hw_interface::panic, this);
@@ -62,7 +62,7 @@ namespace UWEsub {
 
 
         /// connect and register the joint effort interface for the 6 potentially controlled DOF
-        hardware_interface::JointHandle pos_handle_x(joint_state_interface.getHandle("x"), &cmd[0]);
+        hardware_interface::JointHandle pos_handle_x(joint_state_interface.getHandle("thruster"), &cmd[0]);
         jnt_eff_interface.registerHandle(pos_handle_x);
          
 
@@ -82,11 +82,11 @@ namespace UWEsub {
 
         /// Get the required variables from the parameter server and set standard values if not available
         loop_hz_ = 0;
-        if (!nh_.getParam("/thruster_interface/update_rate", loop_hz_)) {
+        if (!nh_.getParam("/ros_control_iso/thruster_ident_driver/update_rate", loop_hz_)) {
 
             ROS_ERROR("thruster_ident_hw_loop: Could not find update rate, assuming 50. \n");
             loop_hz_ = 50;
-            nh_.setParam("thruster_interface/update_rate", loop_hz_);
+            nh_.setParam("/ros_control_iso/thruster_ident_driver/update_rate", loop_hz_);
         }
 
         /// Set up the control loop by creating a timer and a connected callback
@@ -178,7 +178,8 @@ namespace UWEsub {
             /// Let the controller do its work
             controller_manager_->update(ros::Time::now(), elapsed_time_);
 
-
+            // get the command into the right position.
+            write_command[0] = cmd[0];
             // Write the new command to the motor drivers
             write();
         }
@@ -196,6 +197,7 @@ namespace UWEsub {
             // resize the array
             thruster_driver_command_publisher_->msg_.data.clear();
             thruster_driver_command_publisher_->msg_.data.resize(write_command.size(),0);
+            ROS_INFO("%d", write_command[0]);
             // fill the message with the commands to be written
             for (int x = 0; x < write_command.size(); x++) {
                 thruster_driver_command_publisher_->msg_.data[x] = write_command[x];

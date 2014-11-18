@@ -1,5 +1,5 @@
 <launch>
   <!-- urdf xml robot description loaded on the Parameter Server-->
     <rosparam command="load" file="$(find thruster_ident_driver)/thruster_ident_param.yaml" />
-    <node name="thruster_ident_driver" pkg="thruster_ident_hw_loop" type="thruster_ident_hw_loop"/>  
+    <node name="thruster_ident_hw_loop" pkg="thruster_ident_driver" type="thruster_ident_hw_loop"/>  
 </launch>
