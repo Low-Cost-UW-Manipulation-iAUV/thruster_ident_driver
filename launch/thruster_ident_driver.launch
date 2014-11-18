@@ -1,0 +1,12 @@
+<launch>
+  <!-- urdf xml robot description loaded on the Parameter Server-->
+	<rosparam command="load" file="$(find thruster_ident_driver)/thruster_ident_param.yaml" />
+
+  <!-- publish all the frames to TF -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+    <param name="publish_frequency" value="400"/> <!-- Hz -->
+
+	<node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+	  output="screen" ns="/ros_control_iso" args="thruster_ident_driver" />    
+  </node>  
+</launch>
