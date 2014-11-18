@@ -197,7 +197,6 @@ namespace UWEsub {
             // resize the array
             thruster_driver_command_publisher_->msg_.data.clear();
             thruster_driver_command_publisher_->msg_.data.resize(write_command.size(),0);
-            ROS_INFO("%d", write_command[0]);
             // fill the message with the commands to be written
             for (int x = 0; x < write_command.size(); x++) {
                 thruster_driver_command_publisher_->msg_.data[x] = write_command[x];
