@@ -1,5 +1,0 @@
-<launch>
-  <!-- urdf xml robot description loaded on the Parameter Server-->
-    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
-      output="screen"  args="/ros_control_iso/thruster_ident_driver" />    
-</launch>
