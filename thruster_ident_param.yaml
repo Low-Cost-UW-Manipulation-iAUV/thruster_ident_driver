@@ -1,7 +1,7 @@
 ros_control_iso: #The Identification by Self-Oscillation parameter server parameter initialisation yaml file
   joint: thruster  # The DOF that we are working on.
   thruster_ident_driver:
-    lever_factor: 17.0760
+    lever_factor: 17.0043
     update_rate : 50
     calibration_length: 20
     min_acquisiton_length: 20
