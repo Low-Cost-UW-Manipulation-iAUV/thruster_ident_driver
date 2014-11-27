@@ -125,6 +125,8 @@ namespace ros_control_iso{
     
       ///End the calibration once enough samples, calc the offset
       if(num_of_samples >= calibration_length_num_of_samples){
+        ROS_INFO("before offset = accumulator/num_of_samples;");
+
         offset = accumulator/num_of_samples;
         ros::param::set("/ros_control_iso/thruster_ident_driver/signal_offset", offset);
 
@@ -138,6 +140,7 @@ namespace ros_control_iso{
     ///run the normal routine with stability test
     }else{
       ADC_data = message->x;
+
     }
   }
 
