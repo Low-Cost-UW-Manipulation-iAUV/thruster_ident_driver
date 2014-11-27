@@ -31,19 +31,21 @@ namespace UWEsub {
 
     phoenix_hw_interface::phoenix_hw_interface() {
         ///set the controller output to 0
-        cmd[0] = 0.0;
+        cmd[0] = 0;
+
+
        
         // and the controller input / current position
-        pos[0] = 0.0;
+        pos[0] = 0;
 
-        vel[0] = 0.0;
+        vel[0] = 0;
 
-        eff[0] = 0.0;        
+        eff[0] = 0;        
 
         sequence = 0;
         terminate_flag = false;
         safe = false;
-        write_command.resize(5,0.0); //send  0 commands to all thrusters.
+        write_command.resize(5,0); //send  0 commands to all thrusters.
 
         /// Create a panic command line panic button that can be used like this: rosservice call stop
         panic_stopper = nh_.advertiseService("/stop", &phoenix_hw_interface::panic, this);
@@ -105,7 +107,7 @@ namespace UWEsub {
     void phoenix_hw_interface::terminate(void) {
         timer_update.stop();
         for (int x = 0; x < write_command.size(); x++) {
-            write_command[x] = 0.0;
+            write_command[x] = 0;
         }
         
         write();
@@ -113,7 +115,7 @@ namespace UWEsub {
         while ( write() != EXIT_SUCCESS ) {
             usleep(100);
             for (int x = 0; x < write_command.size(); x++) {
-                write_command[x] = 0.0;
+                write_command[x] = 0;
             }
             ROS_ERROR("thruster_ident_hw_loop: still trying to stop the thrusters, then shutting down");
         } 
@@ -128,13 +130,13 @@ namespace UWEsub {
         /// Stopping the ros::timer
         timer_update.stop();
         for (int x = 0; x < write_command.size(); x++) {
-            write_command[x] = 0.0;
+            write_command[x] = 0;
         }
 
         while ( write() != EXIT_SUCCESS ) {
             usleep(100);
             for (int x = 0; x < write_command.size(); x++) {
-                write_command[x] = 0.0;
+                write_command[x] = 0;
             }
             ROS_ERROR("thruster_ident_hw_loop: still trying to stop the thrusters");
         }
@@ -152,7 +154,7 @@ namespace UWEsub {
     void phoenix_hw_interface::panic_loop(const ros::TimerEvent& event) {
 
         for (int x = 0; x < write_command.size(); x++) {
-            write_command[x] = 0.0;
+            write_command[x] = 0;
         }
         write();
     }
@@ -180,6 +182,11 @@ namespace UWEsub {
 
             // get the command into the right position.
             write_command[0] = cmd[0];
+            write_command[1] = 0;
+            write_command[2] = 0;
+            write_command[3] = 0;
+            write_command[4] = 0;
+
             // Write the new command to the motor drivers
             write();
         }
