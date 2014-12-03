@@ -37,8 +37,8 @@
 
 #define TRUE 1
 #define FALSE 0
-#define FORWARD 1
-#define BACKWARD 0
+#define FORWARD true
+#define BACKWARD false
 
 #define STRICT 2
 
@@ -71,7 +71,7 @@ namespace ros_control_iso{
 		double lever_factor;
 		double update_rate;
 		double calibration_length;
-		float offset;
+		double offset;
 		bool direction;
 		bool stable;
 		bool calibration_complete;
