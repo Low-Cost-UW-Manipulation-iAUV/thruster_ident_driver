@@ -182,10 +182,10 @@ namespace UWEsub {
 
             // get the command into the right position.
             write_command[0] = cmd[0];
-            write_command[1] = 0;
-            write_command[2] = 0;
-            write_command[3] = 0;
-            write_command[4] = 0;
+            write_command[1] = cmd[0];
+            write_command[2] = cmd[0];
+            write_command[3] = cmd[0];
+            write_command[4] = cmd[0];
 
             // Write the new command to the motor drivers
             write();

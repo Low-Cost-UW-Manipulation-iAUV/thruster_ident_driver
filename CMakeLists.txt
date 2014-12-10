@@ -8,6 +8,7 @@ controller_manager
 hardware_interface
 pluginlib
 geometry_msgs
+control_msgs
 #forward_command_controller
 control_toolbox
 realtime_tools
@@ -23,6 +24,7 @@ CATKIN_DEPENDS
 controller_interface
 controller_manager
 geometry_msgs
+control_msgs
 control_toolbox
 realtime_tools
 urdf
